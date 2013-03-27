@@ -315,6 +315,7 @@ d-i user-setup/encrypt-home boolean false
 #d-i apt-setup/local0/repository string \
 #       http://local.server/ubuntu squeeze main
 #d-i apt-setup/local0/comment string local server
+d-i apt-setup/local0/repository string http://free.nchc.org.tw/debian squeeze non-free
 # Enable deb-src lines
 #d-i apt-setup/local0/source boolean true
 # URL to the public key of the local repository; you must provide a key or
@@ -325,15 +326,20 @@ d-i user-setup/encrypt-home boolean false
 # By default the installer requires that repositories be authenticated
 # using a known gpg key. This setting can be used to disable that
 # authentication. Warning: Insecure, not recommended.
-#d-i debian-installer/allow_unauthenticated boolean true
+d-i debian-installer/allow_unauthenticated boolean true
 
 ### Package selection
 tasksel tasksel/first multiselect 
 #tasksel tasksel/first multiselect lamp-server, print-server
 #tasksel tasksel/first multiselect kubuntu-desktop
 
+### Installing java packages non-interactively (without prompt)
+sun-java6-bin shared/accepted-sun-dlj-v1-1 select true
+sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true
+sun-java6-jre shared/accepted-sun-dlj-v1-1 select true
+
 # Individual additional packages to install
-d-i pkgsel/include string openssh-server vim sudo      openbox xserver-xorg-video-vesa xinit xfonts-base xterm firefox
+d-i pkgsel/include string openssh-server vim sudo   sun-java6-jdk   openbox xserver-xorg-video-vesa xinit xfonts-base xterm firefox
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
 d-i pkgsel/upgrade select safe-upgrade
