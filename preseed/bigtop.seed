@@ -322,6 +322,8 @@ d-i apt-setup/local0/repository string http://free.nchc.org.tw/debian squeeze no
 # apt will complain about the unauthenticated repository and so the
 # sources.list line will be left commented out
 #d-i apt-setup/local0/key string http://local.server/key
+d-i apt-setup/local1/repository string http://bigtop.s3.amazonaws.com/releases/0.5.0/ubuntu/precise/x86_64 bigtop contrib
+d-i apt-setup/local1/key string http://archive.apache.org/dist/bigtop/bigtop-0.5.0/repos/GPG-KEY-bigtop
 
 # By default the installer requires that repositories be authenticated
 # using a known gpg key. This setting can be used to disable that
@@ -339,7 +341,7 @@ sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true
 sun-java6-jre shared/accepted-sun-dlj-v1-1 select true
 
 # Individual additional packages to install
-d-i pkgsel/include string openssh-server vim sudo locales   sun-java6-jdk   openbox xserver-xorg-video-vesa xinit xfonts-base xterm firefox
+d-i pkgsel/include string openssh-server vim sudo locales   sun-java6-jdk   openbox xserver-xorg-video-vesa xinit xfonts-base xterm firefox     bigtop-utils
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
 d-i pkgsel/upgrade select safe-upgrade
