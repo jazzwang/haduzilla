@@ -16,11 +16,11 @@ iso:
 	cp isolinux/* 	cd-dst/isolinux
 	cp preseed/* 	cd-dst/preseed
 	sed -i "s#\%RELEASE\%#$(DATE)#" cd-dst/isolinux/isolinux.cfg
-	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop.iso cd-dst
-	isohybrid bigtop.iso
+	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(DATE).iso cd-dst
+	isohybrid bigtop-$(DATE).iso
 
 clean:
-	rm -rf cd-src cd-dst bigtop.iso
+	rm -rf cd-src cd-dst bigtop-$(DATE).iso
 
 dist-clean: clean
 	rm -rf $(ISO_FILE) $(ONE_TMPL)
