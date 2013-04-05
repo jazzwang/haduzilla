@@ -1,0 +1,6 @@
+# default disk partition to mount for Hadoop datanode
+DISK1=/dev/sda1
+# default mount point for Hadoop datanode dfs folder
+MOUNT1=/var/lib/hadoop
+# default swap partition
+SWAP=/dev/sda2

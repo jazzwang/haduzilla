@@ -1,0 +1,108 @@
+#! /bin/sh
+#
+# skeleton  example file to build /etc/init.d/ scripts.
+#    This file should be used to construct scripts for /etc/init.d.
+#
+#    Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#    Modified for Debian
+#    by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#               Further changes by Javier Fernandez-Sanguino <jfs@debian.org>
+#
+# Version:  @(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
+#
+### BEGIN INIT INFO
+# Provides:          drbl-hadoop-mount-disk
+# Required-Start:    $network $local_fs
+# Required-Stop:
+# Should-Start:      $named
+# Should-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: mount local disk for Hadoop datanode daemon
+### END INIT INFO
+
+set -e
+
+DISK1=/dev/sda1
+MOUNT1=/var/lib/hadoop/
+SWAP=/dev/sda2
+
+if [ -f /etc/default/drbl-hadoop ] ; then
+  . /etc/default/drbl-hadoop
+fi
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+NAME=drbl-hadoop-mount-disk
+DESC="mount local disk for Hadoop datanode daemon"
+
+PIDFILE=/var/run/drbl-hadoop.pid
+DODTIME=3                   # Time to wait for the server to die, in seconds
+                            # If this value is set too low you might not
+                            # let some servers to die gracefully and
+                            # 'restart' will not work
+
+start() {
+  if [ ! -x $MOUNT1 ]; then
+    mkdir -p $MOUNT1
+    chown hadoop:hadoop $MOUNT1
+  fi
+  mount $DISK1 $MOUNT1
+  swapon $SWAP
+  touch $PIDFILE
+}
+
+stop() {
+  umount $DISK1
+  rm -f $PIDFILE
+}
+
+
+case "$1" in
+  start)
+        echo -n "Starting $DESC: "
+        start
+        if [ -f $PIDFILE ] ; then
+            echo "OK."
+        else
+            echo "ERROR."
+        fi
+  ;;
+  stop)
+        echo -n "Stopping $DESC: "
+        stop
+        if [ ! -f $PIDFILE ] ; then
+            echo "OK."
+        else
+            echo "ERROR."
+        fi
+  ;;
+  force-reload)
+	if [ -f $PIDFILE ] ; then
+	  $0 restart
+	fi
+  ;;
+  restart)
+        echo -n "Restarting $DESC: "
+        if [ -f $PIDFILE ] ; then 
+	  stop 
+	fi
+        [ -n "$DODTIME" ] && sleep $DODTIME
+        $0 start
+  ;;
+  status)
+    echo -n "$DISK is "
+    if [ -f $PIDFILE ] ;  then
+        echo "mounted"
+    else
+        echo "not mounted."
+        exit 1
+    fi
+    ;;
+  *)
+  N=/etc/init.d/$NAME
+  echo "Usage: $N {start|stop|restart|force-reload|status}" >&2
+  exit 1
+  ;;
+esac
+
+exit 0
