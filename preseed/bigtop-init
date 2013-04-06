@@ -1,2 +1,3 @@
 #!/bin/bash
 echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun" >> /etc/default/bigtop-utils
+/etc/init.d/hadoop-hdfs-namenode init
