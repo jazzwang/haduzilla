@@ -479,4 +479,4 @@ d-i cdrom-detect/eject boolean false
 # packages and run commands in the target system.
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 d-i preseed/late_command string \
-	 in-target /cdrom/preseed/bigtop-init
+	 in-target /media/cdrom/preseed/bigtop-init
