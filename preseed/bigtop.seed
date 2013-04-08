@@ -342,9 +342,10 @@ sun-java6-jre shared/accepted-sun-dlj-v1-1 select true
 
 # Individual additional packages to install
 d-i pkgsel/include string openssh-server vim sudo locales sun-java6-jdk bigtop-utils hadoop-conf-pseudo
+d-i pkgsel/exclude string vim-tiny nano xserver-common ubuntu-standard
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
-#d-i pkgsel/upgrade select safe-upgrade
+d-i pkgsel/upgrade select none
 
 # Language pack selection
 #d-i pkgsel/language-packs multiselect de, en, zh
@@ -363,7 +364,7 @@ d-i pkgsel/include string openssh-server vim sudo locales sun-java6-jdk bigtop-u
 # By default, the system's locate database will be updated after the
 # installer has finished installing most packages. This may take a while, so
 # if you don't want it, you can set this to "false" to turn it off.
-#d-i pkgsel/updatedb boolean true
+d-i pkgsel/updatedb boolean false
 
 ### Boot loader installation
 # Grub is the default boot loader (for x86). If you want lilo installed
