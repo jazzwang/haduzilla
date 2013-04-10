@@ -341,8 +341,8 @@ sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true
 sun-java6-jre shared/accepted-sun-dlj-v1-1 select true
 
 # Individual additional packages to install
-d-i pkgsel/include string openssh-server vim sudo locales sun-java6-jdk bigtop-utils hadoop-conf-pseudo
-d-i pkgsel/exclude string vim-tiny nano xserver-common ubuntu-standard
+d-i pkgsel/include string openssh-server vim sudo locales sun-java6-jdk bigtop-utils hadoop-conf-pseudo w3m
+d-i pkgsel/exclude string vim-tiny nano ed xserver-common ubuntu-standard
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
 d-i pkgsel/upgrade select none
