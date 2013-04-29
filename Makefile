@@ -5,11 +5,11 @@
 ISO_URL  := http://ftp.twaren.net/ubuntu-cd/precise
 ISO_FILE := ubuntu-12.04.2-alternate-amd64.iso
 DATE	 := $$(date +%y%m%d-%H%M)
-VERSION	 := 0.5.0
+VERSION	 := 0.6.0
 
 all: iso
 
-iso: 
+preseed: 
 	mkdir -p cd-src cd-dst
 	if [ ! -f /usr/bin/rsync ]; then apt-get -y install rsync; fi
 	if [ ! -f /usr/bin/genisoimage ]; then apt-get -y install genisoimage; fi
@@ -21,8 +21,12 @@ iso:
 	cp isolinux/* 	cd-dst/isolinux
 	cp preseed/* 	cd-dst/preseed
 	sed -i "s#\%RELEASE\%#$(DATE)#" cd-dst/isolinux/isolinux.cfg
+
+bigtop: preseed
 	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION).iso cd-dst
 	isohybrid bigtop-$(VERSION).iso
+
+iso: bigtop
 
 clean:
 	rm -rf cd-src cd-dst bigtop-$(VERSION).iso
