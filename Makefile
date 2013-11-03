@@ -18,11 +18,13 @@ base:
 	mount -o loop $(ISO_FILE) cd-src/
 	rsync -av cd-src/ cd-dst/
 	umount cd-src
+stage1: base
+	mkdir -p cd-dst/preseed
 	cp isolinux/* 	cd-dst/isolinux
 	cp preseed/* 	cd-dst/preseed
 	sed -i "s#\%RELEASE\%#$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
-bigtop: base
+bigtop: stage1
 	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION).iso cd-dst
 	isohybrid bigtop-$(VERSION).iso
 
