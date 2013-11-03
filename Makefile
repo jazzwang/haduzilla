@@ -2,8 +2,8 @@
 ## Note: https://help.ubuntu.com/community/Installation/MinimalCD
 ## Maybe use http://archive.ubuntu.com/ubuntu/dists/raring/main/installer-i386/current/images/netboot/mini.iso for next release
 
-ISO_URL  := http://ftp.twaren.net/ubuntu-cd/precise
-ISO_FILE := ubuntu-12.04.2-alternate-amd64.iso
+ISO_URL  := http://ftp.twaren.net/debian-cd/current/amd64/iso-cd/
+ISO_FILE := debian-7.2.0-amd64-netinst.iso
 DATE	 := $$(date +%y%m%d-%H%M)
 VERSION	 := 0.6.0
 
