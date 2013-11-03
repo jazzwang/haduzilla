@@ -83,7 +83,7 @@ d-i hw-detect/load_firmware boolean true
 #d-i mirror/protocol string ftp
 d-i mirror/country string manual
 d-i mirror/http/hostname string free.nchc.org.tw
-d-i mirror/http/directory string /ubuntu
+d-i mirror/http/directory string /debian
 d-i mirror/http/proxy string
 
 # Alternatively: by default, the installer uses CC.archive.ubuntu.com where
@@ -342,7 +342,7 @@ sun-java6-jre shared/accepted-sun-dlj-v1-1 select true
 
 # Individual additional packages to install
 d-i pkgsel/include string openssh-server vim sudo locales sun-java6-jdk bigtop-utils hadoop-conf-pseudo w3m
-d-i pkgsel/exclude string vim-tiny nano ed xserver-common ubuntu-standard
+d-i pkgsel/exclude string vim-tiny nano ed xserver-common 
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
 d-i pkgsel/upgrade select none
