@@ -324,8 +324,8 @@ d-i apt-setup/local0/repository string http://free.nchc.org.tw/debian squeeze no
 # apt will complain about the unauthenticated repository and so the
 # sources.list line will be left commented out
 #d-i apt-setup/local0/key string http://local.server/key
-d-i apt-setup/local1/repository string http://bigtop.s3.amazonaws.com/releases/0.6.0/ubuntu/precise/x86_64 bigtop contrib
-d-i apt-setup/local1/key string http://archive.apache.org/dist/bigtop/bigtop-0.6.0/repos/GPG-KEY-bigtop
+d-i apt-setup/local1/repository string http://bigtop.s3.amazonaws.com/releases/0.7.0/ubuntu/precise/x86_64 bigtop contrib
+d-i apt-setup/local1/key string http://archive.apache.org/dist/bigtop/bigtop-0.7.0/repos/GPG-KEY-bigtop
 d-i apt-setup/local2/repository string http://free.nchc.org.tw/debian testing main
 
 # By default the installer requires that repositories be authenticated
@@ -482,5 +482,6 @@ d-i cdrom-detect/eject boolean false
 # directly, or use the apt-install and in-target commands to easily install
 # packages and run commands in the target system.
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
-d-i preseed/late_command string \
-	 in-target cp /media/cdrom/preseed/bigtop-init /root/.
+d-i preseed/late_command string cp /media/cdrom/preseed/bigtop-init /target/root/bigtop-init; \
+	 chmod a+x /target/root/bigtop-init; \
+	 in-target /root/bigtop-init

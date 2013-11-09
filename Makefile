@@ -5,7 +5,7 @@
 ISO_URL  := http://ftp.twaren.net/debian-cd/current/amd64/iso-cd/
 ISO_FILE := debian-7.2.0-amd64-netinst.iso
 DATE	 := $$(date +%y%m%d-%H%M)
-VERSION	 := 0.6.0
+VERSION	 := 0.7.0
 BASE	 := wheezy
 
 all: iso
