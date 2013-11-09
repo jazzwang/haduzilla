@@ -3,9 +3,10 @@
 ## Maybe use http://archive.ubuntu.com/ubuntu/dists/raring/main/installer-i386/current/images/netboot/mini.iso for next release
 
 ISO_URL  := http://ftp.twaren.net/ubuntu-cd/precise
-ISO_FILE := ubuntu-12.04.2-alternate-amd64.iso
+ISO_FILE := ubuntu-12.04.3-alternate-amd64.iso
 DATE	 := $$(date +%y%m%d-%H%M)
-VERSION	 := 0.6.0
+VERSION	 := 0.7.0
+BASE	 := precise
 
 all: iso
 
@@ -23,13 +24,13 @@ base:
 	sed -i "s#\%RELEASE\%#$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
 bigtop: base
-	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION).iso cd-dst
-	isohybrid bigtop-$(VERSION).iso
+	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION)_$(BASE).iso cd-dst
+	isohybrid bigtop-$(VERSION)_$(BASE).iso
 
 iso: bigtop
 
 clean:
-	rm -rf cd-src cd-dst bigtop-$(VERSION).iso
+	rm -rf cd-src cd-dst bigtop-$(VERSION)_$(BASE).iso
 
 dist-clean: clean
 	rm -rf $(ISO_FILE) $(ONE_TMPL)
