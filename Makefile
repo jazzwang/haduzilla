@@ -6,6 +6,7 @@ ISO_URL  := http://ftp.twaren.net/debian-cd/current/amd64/iso-cd/
 ISO_FILE := debian-7.2.0-amd64-netinst.iso
 DATE	 := $$(date +%y%m%d-%H%M)
 VERSION	 := 0.6.0
+BASE	 := wheezy
 
 all: iso
 
@@ -25,13 +26,13 @@ stage1: base
 	sed -i "s#\%RELEASE\%#$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
 bigtop: stage1
-	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION).iso cd-dst
-	isohybrid bigtop-$(VERSION).iso
+	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION)_$(BASE).iso cd-dst
+	isohybrid bigtop-$(VERSION)_$(BASE).iso
 
 iso: bigtop
 
 clean:
-	rm -rf cd-src cd-dst bigtop-$(VERSION).iso
+	rm -rf cd-src cd-dst bigtop-$(VERSION)_$(BASE).iso
 
 dist-clean: clean
 	rm -rf $(ISO_FILE) $(ONE_TMPL)

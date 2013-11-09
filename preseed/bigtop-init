@@ -1,9 +1,11 @@
 #!/bin/bash
 echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun" >> /etc/default/bigtop-utils
+mkdir -p /var/log/hadoop-yarn/apps
+chown -R yarn:yarn /var/log/hadoop-yarn/apps
 /etc/init.d/hadoop-hdfs-namenode init
 /etc/init.d/hadoop-hdfs-namenode start
 /etc/init.d/hadoop-hdfs-datanode start
 su - hdfs -c "hadoop fs -mkdir -p /var/log/hadoop-yarn/apps"
-su - hdfs -c "hadoop fs -chown -R mapred /var/log/hadoop-yarn"
+su - hdfs -c "hadoop fs -chown -R yarn /var/log/hadoop-yarn"
 su - hdfs -c "hadoop fs -mkdir -p /user/user/tmp"
 su - hdfs -c "hadoop fs -chown -R user /user/user"
