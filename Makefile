@@ -21,7 +21,7 @@ base:
 	umount cd-src
 	cp isolinux/* 	cd-dst/isolinux
 	cp preseed/* 	cd-dst/preseed
-	sed -i "s#\%RELEASE\%#$(DATE)#" cd-dst/isolinux/isolinux.cfg
+	sed -i "s#\%RELEASE\%#$(VERSION)_$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
 bigtop: base
 	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION)_$(BASE).iso cd-dst
