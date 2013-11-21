@@ -1,15 +1,4 @@
 #! /bin/sh
-#
-# skeleton  example file to build /etc/init.d/ scripts.
-#    This file should be used to construct scripts for /etc/init.d.
-#
-#    Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#    Modified for Debian
-#    by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#               Further changes by Javier Fernandez-Sanguino <jfs@debian.org>
-#
-# Version:  @(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
-#
 ### BEGIN INIT INFO
 # Provides:          drbl-hadoop-mount-disk
 # Required-Start:    $network $local_fs
@@ -21,11 +10,30 @@
 # Short-Description: mount local disk for Hadoop datanode daemon
 ### END INIT INFO
 
+# The basic layout for hadoop datanode in each disk. The first partition is swap 
+# and second is data partition with unix  filesystem for drbl hardoop. eg:
+# |---------|----------------------------|
+# | SWAP 1G | second part for data node  |
+# |---------|----------------------------|
+# go...
+
+#TODO
+# add lvm support
+# add multi disk support
+
 set -e
 
-DISK1=/dev/sda1
-MOUNT1=/var/lib/hadoop/
-SWAP=/dev/sda2
+prompt_for_exist_partition="y" # don't touch exist data and partition table
+#prompt_for_exist_partition="y" # check exist data and ask to re-create new partition or not
+# or rcho "y" | ./haduzilla-auto-part to always re-create partition table
+
+
+# define variables
+DEFAULT_FS="ext4"
+DISKS="/dev/sda"
+MOUNT_POINT="/var/lib/hadoop/"
+PART=""
+SWAP=""
 
 if [ -f /etc/default/drbl-hadoop ] ; then
   . /etc/default/drbl-hadoop
@@ -41,18 +49,130 @@ DODTIME=3                   # Time to wait for the server to die, in seconds
                             # let some servers to die gracefully and
                             # 'restart' will not work
 
+# define functions
+erase_mbr(){
+    DISK=$1
+    echo "clean MBR"
+    dd if=/dev/zero of=$DISK bs=512 count=1
+}
+
+erase_gpt(){
+    DISK=$1
+    echo "clean gpt"
+    dd if=/dev/zero of=$DISK bs=512 count=32
+}
+
+create_mbr(){
+    DISK=$1
+echo "n
+p
+1
+
++1G
+n
+p
+2
+
+
+w
+"|fdisk $DISK
+}
+
+new_swap(){
+    DISK=$1
+    SWAP=$(echo "$DISK"1)
+    mkswap $SWAP
+}
+
+new_partition(){
+# test the speed of mkfs.EFAULT_FS and partclone.EFAULT_FS
+    PART=$(echo "$DISK"2)
+    mkfs.$DEFAULT_FS $PART
+}
+
+create_parts(){
+    for each_disk in $DISKS; do
+	erase_mbr $each_disk
+        create_mbr $each_disk
+	new_swap $each_disk
+        new_partition $each_disk
+	# create lvm for multi disk in the future, but how about performance?...
+	#all_parts=$(echo "$all_parts" "$DISK"2) 
+    done
+    # for lvm in the future
+    #pvcreate /dev/sda1 /dev/sdb1
+    #vgcreate pt  /dev/sda1 /dev/sdb1
+    #lvcreate --name data --size 8G pt
+    #mkfs.reiserfe /dev/pt/data
+    #mount /dev/pt/data /mnt
+}
+
+
+check_disk_layout(){
+
+    # test is empty disk or not
+    set +e
+    parts=$(blkid)
+    set -e
+
+    # is empty, let's do it
+    if [ -z "$parts" ]; then
+	create_parts
+    else
+    # not empty, confirm really erase and create partition for hadoop
+    PART=$(blkid | grep $DEFAULT_FS | awk {'print $1'} | sed s/://g)
+    SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
+    if [ X"$prompt_for_exist_partition" != X"N" ]; then
+        echo "erase data and create new partitions"
+	echo -n "[y/N] "
+	read ans
+	case "$ans" in y|Y) 
+	# say yes, let's do it
+	    echo "let's do it"
+	    create_parts
+	    ;;
+	*) 
+	# say no, to skip
+	    echo "exit" 
+	    PART=$(blkid | grep $DEFAULT_FS | awk {'print $1'} | sed s/://g)
+	    SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
+	    exit 1
+	    ;;
+	esac
+    fi
+fi
+# done
+partprobe
+# or hdparam -z /dev/sda
+blkid
+
+}
 start() {
-  if [ ! -x $MOUNT1 ]; then
-    mkdir -p $MOUNT1
-    chown hadoop:hadoop $MOUNT1
+  check_disk_layout
+
+  if [ ! -x $MOUNT_POINT ]; then
+    mkdir -p $MOUNT_POINT
+    chown hadoop:hadoop $MOUNT_POINT
   fi
-  mount $DISK1 $MOUNT1
+
+  if [ -z "$PART"  ]; then
+    echo "something wrong, can't found data node partition"
+    exit 2
+  fi
+
+  if [ -z "$SWAP"  ]; then
+    echo "something wrong, can't found swap partition"
+    exit 2
+  fi
+  mount $PART $MOUNT_POINT
   swapon $SWAP
   touch $PIDFILE
 }
 
 stop() {
-  umount $DISK1
+  SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
+  umount $MOUNT_POINT
+  swapoff $SWAP
   rm -f $PIDFILE
 }
 
@@ -90,7 +210,7 @@ case "$1" in
         $0 start
   ;;
   status)
-    echo -n "$DISK is "
+    echo -n "$PART is "
     if [ -f $PIDFILE ] ;  then
         echo "mounted"
     else
