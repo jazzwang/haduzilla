@@ -15,13 +15,13 @@
 ### END INIT INFO
 
 #
-DRBL_SCRIPT_PATH="${DRBL_SCRIPT_PATH:-/opt/drbl/}"
+DRBL_SCRIPT_PATH="${DRBL_SCRIPT_PATH:-/usr/share/drbl}"
 
 . $DRBL_SCRIPT_PATH/sbin/drbl-conf-functions
-. $DRBL_SCRIPT_PATH/conf/drbl-ocs.conf
-. $DRBL_SCRIPT_PATH/sbin/ocs-functions
+[ -e /etc/drbl/drbl-ocs.conf ] && . /etc/drbl/drbl-ocs.conf
+[ -e $DRBL_SCRIPT_PATH/sbin/ocs-functions ] && . $DRBL_SCRIPT_PATH/sbin/ocs-functions
 
-# Load the config in ocs-live.conf. This is specially for DRBL/Clonezilla live. It will overwrite some settings of /opt/drbl/conf/drbl-ocs.conf, such as $DIA...
+# Load the config in ocs-live.conf. This is specially for DRBL/Clonezilla live. It will overwrite some settings of drbl-ocs.conf, such as $DIA...
 [ -e "/etc/ocs/ocs-live.conf" ] && . /etc/ocs/ocs-live.conf
 
 # functions
@@ -32,7 +32,7 @@ USAGE() {
     echo "OPTION:"
     echo "-p, --prepare-ocsroot         Prepare clonezilla image home dir also."
     echo "-s, --skip-pause-in-the-end   Skip showing the messsage and pause in the end of execuation."
-    echo "-n, --no-prompt-drbl-live     Assume it's running for drbl live. (This is normally only used for clonezilla server edition script ocs-srv-live.sh in DRBL live mode)"
+    echo "-n, --no-prompt-drbl-live     Assume it's running for drbl live. (This is normally only used for clonezilla server edition script ocs-srv-live in DRBL live mode)"
     echo "start   Start DRBL services now"
     echo "stop    Stop DRBL services now"
     echo "restart Restart DRBL services now"
@@ -171,6 +171,11 @@ case "$switch" in
        fi
      fi
 
+     # Run mknic-nbi again. Because we run mknic-nbi in the chroot when creating DRBL live. However, the variable use_run_in_initrd and use_dev_pts_in_initrd in initramfs' /etc/linuxrc.conf (i.e. "/usr/lib/mkpxeinitrd-net/initrd-skel/etc/linuxrc.conf") need to be updated in the run time.
+     echo
+     echo "Updating the initramfs for PXE clients..."
+     mknic-nbi -p 1
+
      # ocs_client_no_per_NIC is read from /etc/ocs/ocs-live.conf, which might be from boot parameter.
      if [ -n "$ocs_client_no_per_NIC" ]; then
        LC_ALL=C perl -pi -e "s/^client_no_per_NIC=.*/client_no_per_NIC=$ocs_client_no_per_NIC/g" $drbl_setup_path/files/ocs/live-hook/ocs-live-hook.conf
@@ -223,7 +228,7 @@ case "$switch" in
      client_IP_list_ar=( $client_IP_list )  # put it in an array
      # We can not list too long in hosts.allow, so put 20 elements in a line.
      nloop="$(echo "scale=0; ${#client_IP_list_ar[@]}/20" | bc -l )"
-     echo "# Created by drbl-live.sh" > /etc/hosts.allow
+     echo "# Created by drbl-live" > /etc/hosts.allow
      for i in `seq 1 $nloop`; do
        istart="$(echo "scale=0; 20*$((i-1))" | bc -l)"
        iend="$(echo "scale=0; 20*$((i-1))+19" | bc -l)"
@@ -290,7 +295,7 @@ case "$switch" in
    "stop")
      # block all the clients.
      mv -f /etc/hosts.allow /etc/hosts.allow.orig2
-     echo "# Disabled by drbl-live.sh" > /etc/hosts.allow
+     echo "# Disabled by drbl-live" > /etc/hosts.allow
 
      # stop and remove all services
      echo "Stop DRBL service.."
