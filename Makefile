@@ -2,11 +2,11 @@
 ## Note: https://help.ubuntu.com/community/Installation/MinimalCD
 ## Maybe use http://archive.ubuntu.com/ubuntu/dists/raring/main/installer-i386/current/images/netboot/mini.iso for next release
 
-ISO_URL  := http://ftp.twaren.net/ubuntu-cd/precise
-ISO_FILE := ubuntu-12.04.3-alternate-amd64.iso
+BASE	 := saucy
+ISO_URL  := http://ftp.twaren.net/ubuntu-cd/$(BASE)
+ISO_FILE := ubuntu-13.10-server-amd64.iso
 DATE	 := $$(date +%y%m%d-%H%M)
 VERSION	 := 0.7.0
-BASE	 := precise
 
 all: iso
 
