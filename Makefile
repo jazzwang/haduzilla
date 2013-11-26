@@ -19,8 +19,9 @@ base:
 	mount -o loop $(ISO_FILE) cd-src/
 	rsync -av cd-src/ cd-dst/
 	umount cd-src
-	cp isolinux/* 	cd-dst/isolinux
-	cp preseed/* 	cd-dst/preseed
+	cp isolinux/* 		cd-dst/isolinux
+	cp preseed/* 		cd-dst/preseed
+	cp boot/grub/grub.cfg 	cd-dst/boot/grub
 	sed -i "s#\%RELEASE\%#$(VERSION)_$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
 bigtop: base
