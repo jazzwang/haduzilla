@@ -1,0 +1,56 @@
+#!/bin/bash
+## Setup SSH client Global variable
+echo "ssh config"
+echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config
+## Setup SSH private key for user 'user'
+su user -s /bin/bash -c "ssh-keygen -t rsa -f /home/user/.ssh/id_rsa -q -N \"\""
+### ssh-copy-host for user 'user'
+#### use -p to preserve permission : (X) root:root -> (O) user:user
+cp -p /home/user/.ssh/id_rsa.pub /home/user/.ssh/authorized_keys
+## Setup DRBL
+echo "setup drbl"
+echo "deb http://free.nchc.org.tw/drbl-core drbl stable" > /etc/apt/sources.list.d/drbl.list
+wget -q http://drbl.nchc.org.tw/GPG-KEY-DRBL -O- | apt-key add -
+apt-get update
+apt-get -y install drbl clonezilla mkswap-uuid partclone drbl-chntpw mkpxeinitrd-net gpxe freedos ipxe
+apt-get -y autoremove --purge vim-tiny nano
+## remove NIS service for the first time
+## since it's not yet configured
+update-rc.d -f nis remove
+## remove DHCP and TFTP Server service for the first time 
+## since we will not need it and it's not yet configured
+update-rc.d -f isc-dhcp-server remove
+update-rc.d -f tftpd-hpa remove
+## disable exim4 and dbus service that we don't need now
+update-rc.d -f exim4 remove
+update-rc.d -f dbus remove
+## setup CDH3u1
+echo "setup CDH"
+cp -r /etc/hadoop-0.20/conf.pseudo /etc/hadoop-0.20/conf.haduzilla
+sed "s#localhost#$(hostname)#g" /etc/hadoop-0.20/conf.pseudo/core-site.xml > /etc/hadoop-0.20/conf.haduzilla/core-site.xml
+sed "s#localhost#$(hostname)#g" /etc/hadoop-0.20/conf.pseudo/mapred-site.xml > /etc/hadoop-0.20/conf.haduzilla/mapred-site.xml
+update-alternatives --install /etc/hadoop-0.20/conf hadoop-0.20-conf /etc/hadoop-0.20/conf.haduzilla 50
+su hdfs -s /bin/bash -c "hadoop namenode -format"
+## setup ganglia
+echo "setup ganglia"
+ln -s /etc/ganglia-webfrontend/apache.conf /etc/apache2/conf.d/ganglia-webfrontend
+### replace ganglia 
+sed -e "s#name = \"unspecified\"#name = \"haduzilla\"#" /etc/ganglia/gmond.conf > /etc/ganglia/gmond.conf.new
+mv /etc/ganglia/gmond.conf.new /etc/ganglia/gmond.conf
+## setup network interface alias
+cat >> /etc/network/interfaces << EOF
+## setup eth0:1 as ethernet alias
+auto eth0:1
+iface eth0:1 inet static
+address 10.0.0.254
+netmask 255.0.0.0
+EOF
+## Setup initial procedure of DRBL
+find / -name haduzilla -exec cp -p '{}' /etc/init.d/haduzilla \;
+chmod a+x /etc/init.d/haduzilla
+update-rc.d haduzilla defaults
+## Setup DRBL-Hadoop
+echo "JAVA_HOME=/usr/lib/jvm/java-6-sun" >> /etc/profile
+find / -name drbl-hadoop -exec cp -p '{}' /etc/default/drbl-hadoop \;
+find / -name drbl-hadoop-mount-disk -exec cp -p '{}' /etc/init.d/drbl-hadoop-mount-disk \;
+chmod a+w /etc/init.d/drbl-hadoop-mount-disk
