@@ -29,17 +29,32 @@ prompt_for_exist_partition="N" # don't touch exist data and partition table
 
 
 # define variables
+UUID="e367716d-0646-4507-b630-d8148c3f2a13"
 DEFAULT_DISK="/dev/sda"
+
+#
 DEFAULT_FS="ext4"
+DEFAULT_FS_OPTS="-U $UUID"
+#
+#DEFAULT_FS="xfs"
+#DEFAULT_FS_OPTS="-f " #add xfs_admin -U $UUID /dev/sda
+#
 PART=""
 SWAP=""
 HADOOP_MOUTPOINT="/var/lib/hadoop-0.20/"
+HADOOP_USER="root"
+HADOOP_GROUP="hadoop"
 HADOOP_DATANODE_USER="hdfs"
-HADOOP_DATANODE_USER="hdfs"
+HADOOP_TASKTRACKER_USER="mapred"
 
+# load custom variable to change DEFAULT_DISK
 if [ -f /etc/default/drbl-hadoop ] ; then
   # Loading user defined DISK and HADOOP_MOUNTPOINT for custom reason
   . /etc/default/drbl-hadoop
+fi
+
+# load hadoop env variable
+if [ -f /etc/default/hadoop-0.20 ] ; then
   . /etc/default/hadoop-0.20
   HADOOP_MOUNTPOINT=$(find /etc/hadoop/conf/ -name core-site.xml -exec grep -A1 hadoop.tmp.dir '{}'  \; | grep value | sed -e s#\<value\>## -e s#cache/\${user.name}\</value\>## -e s/\ //g)
 fi
@@ -76,7 +91,8 @@ new_swap(){
 new_partition(){
 # test the speed of mkfs.EFAULT_FS and partclone.EFAULT_FS
     PART=$(echo "$DISK"2)
-    mkfs.$DEFAULT_FS $PART
+    mkfs.$DEFAULT_FS $DEFAULT_FS_OPTS $PART
+    sync
 }
 
 create_parts(){
@@ -86,16 +102,25 @@ create_parts(){
         new_partition $DEFAULT_DISK
 }
 
-
-check_disk_layout(){
-
+check_UUID(){
     # test is empty disk or not
     set +e
     parts=$(blkid)
+    test_uuid=$(echo $parts | grep $(echo $DEFAULT_DISK)2 | grep $UUID)
+    if [ -z "$test_uuid" ]; then
+        echo "fail"
+    else
+        echo "ok"
+    fi
     set -e
+}
+
+check_disk_layout(){
+
+    ret=$(check_UUID)
 
     # is empty, let's do it
-    if [ -z "$parts" ]; then
+    if [ X"$ret" != X"ok" ]; then
 	create_parts
     else
     # not empty, confirm really erase and create partition for hadoop
@@ -117,6 +142,7 @@ check_disk_layout(){
         fi
     fi
     # done, and re-reading partition table
+    sleep $DODTIME
     hdparm -z /dev/sda
 
     if [ -z "$PART" -o -z "$SWAP"  ]; then
@@ -124,6 +150,26 @@ check_disk_layout(){
 	    SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
     fi
 }
+
+prepare_folders(){
+    mapred_dir=$HADOOP_MOUTPOINT/cache/mapred/mapred/local
+    hdfs_dir=$HADOOP_MOUTPOINT/cache/hdfs
+    mkdir -p $mapred_dir $hdfs_dir
+    chown $HADOOP_USER:$HADOOP_GROUP $HADOOP_MOUNTPOINT
+    chown $HADOOP_TASKTRACKER_USER:$HADOOP_TASKTRACKER_USER $mapred_dir
+    chown $HADOOP_DATANODE_USER:$HADOOP_DATANODE_USER $hdfs_dir
+}
+
+restart_hadoop_services(){
+    set +e
+    data_node_status=$($(ls /etc/init.d/hadoop*datanode) status | grep 'not running')
+    if [ -z "$data_node_status" ]; then
+        $(ls /etc/init.d/hadoop*datanode) restart
+        $(ls /etc/init.d/hadoop*tasktracker) restart
+    fi
+    set -e
+}
+
 start() {
   check_disk_layout
 
@@ -142,8 +188,9 @@ start() {
   fi
   cat /proc/partitions
   mount $PART $HADOOP_MOUNTPOINT
-  chown $HADOOP_DATANODE_USER:$HADOOP_DATANODE_USER $HADOOP_MOUNTPOINT
+  prepare_folders
   swapon $SWAP
+  restart_hadoop_services
   touch $PIDFILE
 }
 
@@ -151,6 +198,7 @@ stop() {
   SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
   umount $HADOOP_MOUNTPOINT
   swapoff $SWAP
+  restart_hadoop_services
   rm -f $PIDFILE
 }
 
