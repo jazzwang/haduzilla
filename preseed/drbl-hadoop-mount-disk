@@ -23,20 +23,25 @@
 
 set -e
 
-prompt_for_exist_partition="y" # don't touch exist data and partition table
+prompt_for_exist_partition="N" # don't touch exist data and partition table
 #prompt_for_exist_partition="y" # check exist data and ask to re-create new partition or not
 # or rcho "y" | ./haduzilla-auto-part to always re-create partition table
 
 
 # define variables
+DEFAULT_DISK="/dev/sda"
 DEFAULT_FS="ext4"
-DISKS="/dev/sda"
-MOUNT_POINT="/var/lib/hadoop/"
 PART=""
 SWAP=""
+HADOOP_MOUTPOINT="/var/lib/hadoop-0.20/"
+HADOOP_DATANODE_USER="hdfs"
+HADOOP_DATANODE_USER="hdfs"
 
 if [ -f /etc/default/drbl-hadoop ] ; then
+  # Loading user defined DISK and HADOOP_MOUNTPOINT for custom reason
   . /etc/default/drbl-hadoop
+  . /etc/default/hadoop-0.20
+  HADOOP_MOUNTPOINT=$(find /etc/hadoop/conf/ -name core-site.xml -exec grep -A1 hadoop.tmp.dir '{}'  \; | grep value | sed -e s#\<value\>## -e s#cache/\${user.name}\</value\>## -e s/\ //g)
 fi
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
@@ -50,32 +55,16 @@ DODTIME=3                   # Time to wait for the server to die, in seconds
                             # 'restart' will not work
 
 # define functions
-erase_mbr(){
+erase_pt(){
     DISK=$1
     echo "clean MBR"
-    dd if=/dev/zero of=$DISK bs=512 count=1
-}
-
-erase_gpt(){
-    DISK=$1
-    echo "clean gpt"
     dd if=/dev/zero of=$DISK bs=512 count=32
 }
 
-create_mbr(){
-    DISK=$1
-echo "n
-p
-1
-
-+1G
-n
-p
-2
-
-
-w
-"|fdisk $DISK
+create_pt(){
+    parted -s $DISK  mklabel gpt
+    parted -s $DISK  mkpart primary linux-swap 2048s 1955839s
+    parted -s $DISK  mkpart primary 1955840s 100%
 }
 
 new_swap(){
@@ -91,20 +80,10 @@ new_partition(){
 }
 
 create_parts(){
-    for each_disk in $DISKS; do
-	erase_mbr $each_disk
-        create_mbr $each_disk
-	new_swap $each_disk
-        new_partition $each_disk
-	# create lvm for multi disk in the future, but how about performance?...
-	#all_parts=$(echo "$all_parts" "$DISK"2) 
-    done
-    # for lvm in the future
-    #pvcreate /dev/sda1 /dev/sdb1
-    #vgcreate pt  /dev/sda1 /dev/sdb1
-    #lvcreate --name data --size 8G pt
-    #mkfs.reiserfe /dev/pt/data
-    #mount /dev/pt/data /mnt
+	erase_pt $DEFAULT_DISK
+        create_pt $DEFAULT_DISK
+	new_swap $DEFAULT_DISK
+        new_partition $DEFAULT_DISK
 }
 
 
@@ -120,39 +99,36 @@ check_disk_layout(){
 	create_parts
     else
     # not empty, confirm really erase and create partition for hadoop
-    PART=$(blkid | grep $DEFAULT_FS | awk {'print $1'} | sed s/://g)
-    SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
-    if [ X"$prompt_for_exist_partition" != X"N" ]; then
-        echo "erase data and create new partitions"
-	echo -n "[y/N] "
-	read ans
-	case "$ans" in y|Y) 
-	# say yes, let's do it
-	    echo "let's do it"
-	    create_parts
-	    ;;
-	*) 
-	# say no, to skip
-	    echo "exit" 
+    	if [ X"$prompt_for_exist_partition" != X"N" ]; then
+            echo "erase data and create new partitions"
+	    echo -n "[y/N] "
+	    read ans
+	    case "$ans" in y|Y) 
+	    # say yes, let's do it
+	        echo "let's do it"
+	        create_parts
+	        ;;
+	    *) 
+	    # say no, to skip
+	        echo "exit" 
+	        exit 1
+	        ;;
+	    esac
+        fi
+    fi
+    # done, and re-reading partition table
+    hdparm -z /dev/sda
+
+    if [ -z "$PART" -o -z "$SWAP"  ]; then
 	    PART=$(blkid | grep $DEFAULT_FS | awk {'print $1'} | sed s/://g)
 	    SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
-	    exit 1
-	    ;;
-	esac
     fi
-fi
-# done
-partprobe
-# or hdparam -z /dev/sda
-blkid
-
 }
 start() {
   check_disk_layout
 
-  if [ ! -x $MOUNT_POINT ]; then
-    mkdir -p $MOUNT_POINT
-    chown hadoop:hadoop $MOUNT_POINT
+  if [ ! -x $HADOOP_MOUNTPOINT ]; then
+    mkdir -p $HADOOP_MOUNTPOINT
   fi
 
   if [ -z "$PART"  ]; then
@@ -164,14 +140,16 @@ start() {
     echo "something wrong, can't found swap partition"
     exit 2
   fi
-  mount $PART $MOUNT_POINT
+  cat /proc/partitions
+  mount $PART $HADOOP_MOUNTPOINT
+  chown $HADOOP_DATANODE_USER:$HADOOP_DATANODE_USER $HADOOP_MOUNTPOINT
   swapon $SWAP
   touch $PIDFILE
 }
 
 stop() {
   SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
-  umount $MOUNT_POINT
+  umount $HADOOP_MOUNTPOINT
   swapoff $SWAP
   rm -f $PIDFILE
 }
