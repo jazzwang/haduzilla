@@ -25,7 +25,7 @@ base:
 	sed -i "s#\%RELEASE\%#$(VERSION)_$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
 bigtop: base
-	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION)_$(BASE).iso cd-dst
+	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -eltorito-alt-boot -e cd-dst/boot/efiboot.img -no-emul-boot -boot-load-size 4 -boot-info-table -iso-level 4 -o bigtop-$(VERSION)_$(BASE).iso cd-dst
 	isohybrid bigtop-$(VERSION)_$(BASE).iso
 
 iso: bigtop
