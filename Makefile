@@ -19,14 +19,19 @@ base:
 	mount -o loop $(ISO_FILE) cd-src/
 	rsync -av cd-src/ cd-dst/
 	umount cd-src
+pre:
 	cp isolinux/* 		cd-dst/isolinux
 	cp preseed/* 		cd-dst/preseed
 	cp boot/grub/grub.cfg 	cd-dst/boot/grub
 	sed -i "s#\%RELEASE\%#$(VERSION)_$(DATE)#" cd-dst/isolinux/isolinux.cfg
 
-bigtop: base
-	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -eltorito-alt-boot -e cd-dst/boot/efiboot.img -no-emul-boot -boot-load-size 4 -boot-info-table -iso-level 4 -o bigtop-$(VERSION)_$(BASE).iso cd-dst
+bigtop: base pre
+	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o bigtop-$(VERSION)_$(BASE).iso cd-dst
 	isohybrid bigtop-$(VERSION)_$(BASE).iso
+
+efi:	base pre
+	genisoimage -r -V "Haduzilla $(DATE)" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -eltorito-alt-boot -e cd-dst/boot/efiboot.img -no-emul-boot -boot-load-size 4 -boot-info-table -iso-level 4 -o bigtop-$(VERSION)_$(BASE)_efi.iso cd-dst
+	isohybrid bigtop-$(VERSION)_$(BASE)_efi.iso
 
 iso: bigtop
 
