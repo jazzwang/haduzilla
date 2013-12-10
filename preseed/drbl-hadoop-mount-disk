@@ -25,7 +25,7 @@ set -e
 
 prompt_for_exist_partition="N" # don't touch exist data and partition table
 #prompt_for_exist_partition="y" # check exist data and ask to re-create new partition or not
-# or rcho "y" | ./haduzilla-auto-part to always re-create partition table
+# or echo "y" | ./haduzilla-auto-part to always re-create partition table
 
 
 # define variables
@@ -41,7 +41,7 @@ DEFAULT_FS_OPTS="-U $UUID"
 #
 PART=""
 SWAP=""
-HADOOP_MOUTPOINT="/var/lib/hadoop-0.20/"
+HADOOP_MOUNTPOINT="/var/lib/hadoop-hdfs/"
 HADOOP_USER="root"
 HADOOP_GROUP="hadoop"
 HADOOP_DATANODE_USER="hdfs"
@@ -146,14 +146,14 @@ check_disk_layout(){
     hdparm -z /dev/sda
 
     if [ -z "$PART" -o -z "$SWAP"  ]; then
-	    PART=$(blkid | grep $DEFAULT_FS | awk {'print $1'} | sed s/://g)
+	    PART=$(blkid | grep $DEFAULT_FS | awk {'print $1'} | sed s/://g | head -n 1)
 	    SWAP=$(blkid | grep swap | awk {'print $1'} | sed s/://g)
     fi
 }
 
 prepare_folders(){
-    mapred_dir=$HADOOP_MOUTPOINT/cache/mapred/mapred/local
-    hdfs_dir=$HADOOP_MOUTPOINT/cache/hdfs
+    mapred_dir=$HADOOP_MOUNTPOINT/cache/mapred/mapred/local
+    hdfs_dir=$HADOOP_MOUNTPOINT/cache/hdfs
     mkdir -p $mapred_dir $hdfs_dir
     chown $HADOOP_USER:$HADOOP_GROUP $HADOOP_MOUNTPOINT
     chown $HADOOP_TASKTRACKER_USER:$HADOOP_TASKTRACKER_USER $mapred_dir
