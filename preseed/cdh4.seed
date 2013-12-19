@@ -323,7 +323,6 @@ d-i apt-setup/local0/repository string http://free.nchc.org.tw/debian squeeze no
 # sources.list line will be left commented out
 #d-i apt-setup/local0/key string
 d-i apt-setup/local1/repository string http://archive.cloudera.com/cdh4/ubuntu/saucy/amd64/cdh saucy-cdh4 contrib
-d-i apt-setup/local1/key string http://archive.cloudera.com/cdh4/ubuntu/saucy/amd64/cdh/archive.key
 
 # By default the installer requires that repositories be authenticated
 # using a known gpg key. This setting can be used to disable that
@@ -341,13 +340,20 @@ sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true
 sun-java6-jre shared/accepted-sun-dlj-v1-1 select true
 
 # Individual additional packages to install
-d-i pkgsel/include string openssh-server vim sudo ganglia-monitor ganglia-webfrontend gmetad apache2 libapache2-mod-php5 php5 lsb-release debconf-utils util-linux tar gzip bzip2 lzop pigz pbzip2 procps dialog rsync parted pciutils tcpdump bc gawk hdparm sdparm netcat file ethtool etherwake ssh syslinux mtools reiserfsprogs e2fsprogs psmisc locales wget disktype zip unzip patch iproute traceroute iputils-ping binutils expect partimage udpcast initscripts tftpd-hpa nfs-kernel-server nis curl lftp iptables libdigest-sha-perl udev memtest86+ aoetools btrfs-tools dhcp3-server dmraid dos2unix fgetty hfsprogs hfsutils isc-dhcp-server kpartx lbzip2 libdmraid1.0.0.rc16 lshw lzip lzma runit tofrodos ufsutils vblade vblade-persist bridge-utils ntfs-3g sun-java6-jdk hadoop-0.20-conf-pseudo pig hive sysrqd txt2html
+### install packages for basic operation    : openssh-server vim sudo
+### install packages for cluster management : ganglia-monitor ganglia-webfrontedn gmetad apache2 libapache2-mod-php5 php5
+### install packages for DRBL server	    : util-linux tar gzip bzip2 lzop pigz pbzip2 procps dialog rsync parted pciutils tcpdump bc gawk hdparm sdparm netcat file ethtool etherwake ssh syslinux mtools reiserfsprogs e2fsprogs psmisc locales wget disktype zip unzip patch iproute traceroute iputils-ping binutils expect partimage udpcast initscripts tftpd-hpa nfs-kernel-server nis curl lftp iptables libdigest-sha-perl udev memtest86+ aoetools btrfs-tools dhcp3-server dmraid dos2unix fgetty hfsprogs hfsutils isc-dhcp-server kpartx lbzip2 libdmraid1.0.0.rc16 lshw lzip lzma runit tofrodos ufsutils vblade vblade-persist bridge-utils ntfs-3g 
+### install packages for Hadoop CDH4 + MR1  : hadoop-0.20-conf-pseudo sun-java6-jdk pig hive
+### extra packages for DRBL Client management : sysrqd xfsprogs gdisk
+d-i pkgsel/include string openssh-server vim sudo ganglia-monitor ganglia-webfrontend gmetad apache2 libapache2-mod-php5 php5 lsb-release debconf-utils util-linux tar gzip bzip2 lzop pigz pbzip2 procps dialog rsync parted pciutils tcpdump bc gawk hdparm sdparm netcat file ethtool etherwake ssh syslinux mtools reiserfsprogs e2fsprogs psmisc locales wget disktype zip unzip patch iproute traceroute iputils-ping binutils expect partimage udpcast initscripts tftpd-hpa nfs-kernel-server nis curl lftp iptables libdigest-sha-perl udev memtest86+ aoetools btrfs-tools dhcp3-server dmraid dos2unix fgetty hfsprogs hfsutils isc-dhcp-server kpartx lbzip2 libdmraid1.0.0.rc16 lshw lzip lzma runit tofrodos ufsutils vblade vblade-persist bridge-utils ntfs-3g sun-java6-jdk hadoop-0.20-conf-pseudo pig hive sysrqd xfsprogs gdisk
+### remove packages wich are not needed
+d-i pkgsel/exclude string vim-tiny nano
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
 #d-i pkgsel/upgrade select safe-upgrade
 
 # Language pack selection
-d-i pkgsel/language-packs multiselect en, zh
+#d-i pkgsel/language-packs multiselect en, zh
 
 # Policy for applying updates. May be "none" (no automatic updates),
 # "unattended-upgrades" (install security updates automatically), or
@@ -480,4 +486,4 @@ d-i cdrom-detect/eject boolean false
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 
 d-i preseed/late_command string \
-    in-target find / -name cdh4-inst -exec  sh '{}' \;
+    in-target find / -name haduzilla-inst -exec  sh '{}' \;
